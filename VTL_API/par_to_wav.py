@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- encoding: utf-8 -*-
 
-import ctypes                # for accessing C libraries
+import ctypes
 import os
 import shutil
 
@@ -33,7 +33,7 @@ def par_to_wav(params, speaker='adult', simulation_name='', pitch_var=0.0,
     """
 
     if verbose:
-        print 'simulating ' + speaker
+        print('simulating ' + speaker)
     name = speaker + '_' + simulation_name
 
 
