@@ -1,4 +1,4 @@
-import ctypes				# for accessing C libraries 
+import ctypes				# for accessing C libraries
 from ctypes import cdll
 import numpy				# for array handling
 from numpy import array as ar

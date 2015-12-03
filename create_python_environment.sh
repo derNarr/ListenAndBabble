@@ -15,6 +15,7 @@ pip install pyopenssl ndg-httpsclient pyasn1
 pip install numpy scipy matplotlib
 pip install brian
 pip install mpi4py
+pip install sympy
 
 mkdir build
 cd build
