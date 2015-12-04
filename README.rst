@@ -46,6 +46,17 @@ environment_fun.py :
     supplies the environment for the reinforcement learning. It transforms the
     motor signals into reward signals by using the trained ESN.
 
+Example
+-------
+For an example you can run the following in a shell within this folder (it is
+no working yet)::
+
+    source pyenv/bin/activate
+    python generatedata.py a
+    mv data/temp/a data
+    python learndata.py 1
+
+
 
 .. _numpy: http://sourceforge.net/projects/numpy/files/NumPy/
 .. _scipy: http://sourceforge.net/projects/scipy/files/scipy/

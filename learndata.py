@@ -1,13 +1,7 @@
-import sys
-sys.path.append('/home/murakami/lib/python2.7/site-packages/')
 
 import matplotlib
 matplotlib.use('Agg')
 
-from brian import *
-from brian.hears import *
-from scipy.signal import resample
-from VTL_API.gesWav_fun import gesToWave
 import numpy as np
 import argparse
 
@@ -15,10 +9,7 @@ import Oger
 import mdp
 import pylab
 import scipy as sp
-import numpy as np
 import random
-from Oger.utils import plot_conf
-import sys
 from confusion_matrix import ConfusionMatrix
 import os
 import gzip
@@ -28,6 +19,7 @@ import cPickle
 
 
 
+VOWELS = ('a', 'i', 'u')
 
 
 ##########################################################
@@ -43,7 +35,7 @@ import cPickle
 
 
 
-def loss_01_time(x, y):                 
+def loss_01_time(x, y):
      """ function for comparing two trajectories
          modify shapes of x and y to use predefined loss_01 function"""
 
@@ -68,7 +60,7 @@ def plot_conf_(conf, outputfile_, N):
 
     res = pylab.imshow(np.asarray(conf), cmap=pylab.cm.jet, interpolation='nearest')
     for i, err in enumerate(conf.correct):
-                                        # display correct detection percentages 
+                                        # display correct detection percentages
                                         # (only makes sense for CMs that are normalised per class (each row sums to 1))
         err_percent = "%d%%" % round(err * 100)
         pylab.text(i-.2, i+.1, err_percent, fontsize=14)
@@ -202,7 +194,7 @@ def plot_prototypes(N, leaky=True):
         pylab.ylabel("Neuron")
         if N < 6:
             pylab.yticks(range(N))
-        
+
         cb2 = pylab.colorbar(reservoir_activity)
 #        cb2.update_bruteforce(reservoir_activity)
 
@@ -214,7 +206,7 @@ def plot_prototypes(N, leaky=True):
     class_activity = None
     reservoir_activity = None
 
-    
+
 
 
 class File_Iterator:
@@ -284,11 +276,11 @@ def get_output_folder(subfolder):
         try:
             os.system('mkdir '+outputpath_short)
             os.system('mkdir '+outputpath)
-        except Error:
-            print Error
+        except Exception as e:
+            print e
         finally:
             pass
-    
+
     return outputpath
 
 
@@ -296,7 +288,7 @@ def get_output_folder(subfolder):
 
 def save_flow(flow, N, leaky):
     global output_folder, rank
-    
+
     if rank == 1:
         filename = output_folder+str(N)+'_leaky'+str(leaky)+'.flow'
         os.system('touch '+filename)
@@ -305,10 +297,10 @@ def save_flow(flow, N, leaky):
         flow_file.close()
 
 
-def get_training_and_test_sets(n_samples, n_training):
-    
-    vowels = ['a', 'i', 'u']
-    n_vow = len(vowels)
+def get_training_and_test_sets(n_samples, n_training, n_vow):
+
+    vowels = VOWELS
+
     path = 'data/'
 #    n_samples = 204
 #    n_training = 183
@@ -337,8 +329,9 @@ def get_training_and_test_sets(n_samples, n_training):
             test_set.append((current_samples[n_training+j], label.copy()))
 
     label = protolabel.copy()
-    for i_time in xrange(n_timesteps):
-        label[i_time][3] = 1.
+    # TODO What does this code do?
+    #for i_time in xrange(n_timesteps):
+    #    label[i_time][3] = 1.
     for i in xrange(n_vow):
         current_path = path+'null_'+vowels[i]
         files = os.listdir(current_path)
@@ -361,8 +354,8 @@ def get_training_and_test_sets(n_samples, n_training):
 
     return training_set, test_set
 
-    
-        
+
+
 
 ##########################################################
 #
@@ -373,7 +366,8 @@ def get_training_and_test_sets(n_samples, n_training):
 
 
 
-def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False, separate=False, compressed=True, n_channels=50, classification=True):
+def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False,
+          separate=False, compressed=True, n_channels=50, classification=True):
     global rank, flow, logistic, spectral_radius, leak_rate, regularization, n_samples, n_training
 
     """ function to perform supervised learning on an ESN
@@ -388,7 +382,7 @@ def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False, separat
          n_channels: number of channels used
          classification: boolean defining if sensory classification is performed instead of motor prediction"""
 
-    training_set, test_set = get_training_and_test_sets(n_samples, n_training)
+    training_set, test_set = get_training_and_test_sets(n_samples, n_training, n_vow)
 
     if output:
         print 'samples_test = '+str(test_set)
@@ -422,7 +416,7 @@ def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False, separat
 
     if output:
      print "Training..."
-    
+
     flow.train([[], training_set])
                                         # train flow with input files provided by file iterator
 
@@ -482,7 +476,7 @@ def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False, separat
      print 'ytestmean: '+str(ytestmean)
 
     ytestmean = np.array(ytestmean)     # convert ytestmean and ymean lists to numpy array for confusion matrix
-    ymean = np.array(ymean)             
+    ymean = np.array(ymean)
 
     confusion_matrix = ConfusionMatrix.from_data(N_classes, ytestmean, ymean) # 10 classes
                                         # create confusion matrix from class votes and true classes
@@ -494,8 +488,8 @@ def learn(n_vow, N_reservoir=100, leaky=True, plots=False, output=False, separat
       print 'confusion_matrix = '+str(c_matrix)
 
 
-    save_flow(flow, N_reservoir, leaky) 
-        
+    save_flow(flow, N_reservoir, leaky)
+
 
     return error, c_matrix              # return current error rate and confusion matrix
 
@@ -520,7 +514,7 @@ def main_size_nocompare():
  total_errors = np.zeros([trains_per_worker, len(N_reservoir)])
                                         # prepare lists for errors of each network size
  total_cmatrices = np.zeros([len(N_reservoir), n_vow+1, n_vow+1])                   # create empty list for confusion matrices for each network size
-                                     
+
  for j in xrange(len(N_reservoir)):     # loop over network sizes
   for train in xrange(trains_per_worker):
     print 'worker', rank, 'of', n_workers, 'simulating leaky network of size', N_reservoir[j], '('+str(train+1)+'/'+str(trains_per_worker)+')'
@@ -536,7 +530,7 @@ def main_size_nocompare():
     total_cmatrices[j] += c_matrix             # append current confusion matrix to confusion matrices list
 
  total_cmatrices /= trains_per_worker
- 
+
  if output:
   print 'total_cmatrices:', total_cmatrices
 
@@ -567,7 +561,7 @@ def main_size_compare():
  total_cmatrices_leaky = np.zeros([len(N_reservoir), n_vow, n_vow])
  total_cmatrices_nonleaky = np.zeros([len(N_reservoir), n_vow, n_vow])
                                         # create empty list for confusion matrices for each network size
-                                     
+
  for j in xrange(len(N_reservoir)):     # loop over network sizes
     for train in xrange(trains_per_worker):
         print 'worker', rank, 'of', n_workers, 'simulating leaky network of size', N_reservoir[j], '('+str(train+1)+'/'+str(trains_per_worker)+')'
@@ -593,7 +587,7 @@ def main_size_compare():
 
  total_cmatrices_leaky /= trains_per_worker
  total_cmatrices_nonleaky /= trains_per_worker
- 
+
  if output:
   print 'total_cmatrices_leaky:', total_cmatrices_leaky
   print 'total_cmatrices_nonleaky:', total_cmatrices_nonleaky
@@ -627,7 +621,7 @@ random.seed(np.random.randint(256) * rank)
 
 #************************************************
 #
-# args: n_vow(int) trains_per_worker(int) size(bool(int)) compressed(bool(int)) 
+# args: n_vow(int) trains_per_worker(int) size(bool(int)) compressed(bool(int))
 #       compare(bool(int)) separate(bool(int)) n_channels(int) lower(int) upper(int)
 #
 # call salloc -p sleuths -n <n_workers> mpiexec python learndata.py <n_vow> <trains_per_worker> <size> <compressed> <compare> <separate>
@@ -642,7 +636,7 @@ lib_syll =  ['/a/','/i/','/u/','[o]','[e]','[E:]','[2]','[y]','[A]','[I]','[E]',
 
 Oger.utils.make_inspectable(Oger.nodes.LeakyReservoirNode)
                                         # make reservoir states inspectable for plotting
-Oger.utils.make_inspectable(Oger.nodes.ReservoirNode)    
+Oger.utils.make_inspectable(Oger.nodes.ReservoirNode)
 
 
 
@@ -660,8 +654,11 @@ parser.add_argument('-l', '--logistic', action='store_true', help='train with lo
 parser.add_argument('-r', '--spectral_radius', action='store', type=float, default=0.9, help='spectral radius of leaky reservoir')
 parser.add_argument('-k', '--leak_rate', action='store', type=float, default=0.4, help='leak rate of leaky reservoir neurons')
 parser.add_argument('-R', '--regularization', action='store', type=float, default=0.001, help='regularization parameter')
-parser.add_argument('-n', '--n_samples', nargs='?', type=int, default=204, help='number of samples per vowel')
-parser.add_argument('-T', '--n_training', nargs='?', type=int, default=183, help='number of training samples per vowel')
+parser.add_argument('-n', '--n_samples', nargs='?', type=int, default=100, help='number of samples per vowel')
+parser.add_argument('-T', '--n_training', nargs='?', type=int, default=80, help='number of training samples per vowel')
+
+# n_training used to be 183
+# n_samples used to be 204
 
 args = parser.parse_args()
 n_vow = args.n_vow
@@ -818,7 +815,7 @@ if rank == 1:                           # post processing only by master
             print 'final_stds:', final_stds
         except:
             pass
-    
+
     outputfile.write('leaky:\n\n')
     for i in xrange(len(N_reservoir)):  # loop over all network sizes
         outputfile.write(str(N_reservoir[i])+'     '+str(final_errors[i])+'     '+str(final_stds[i])+'\n')
