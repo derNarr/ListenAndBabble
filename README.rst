@@ -38,7 +38,7 @@ Usage
 generatedata.py :
     generates training samples for the auditory learning.
 learndata.py :
-    does the auditory learning with the ESN.
+    does the auditory learning with the BRIAN hears and the echo state network (ESN).
 rl_agent_mpi.py :
     does the sensomotoric learning. While doing the learning it uses
     ``environment_fun.py`` as a resource.
