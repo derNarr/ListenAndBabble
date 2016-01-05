@@ -20,7 +20,7 @@ Options:
     -h, --help                  Show this screen.
     --n_samples=N_SAMPLES       Number of samples per vowel. [default: 100]
     --n_training=N_TRAINING     Number of training samples per vowel. [default: 80]
-    --n_channels=N_CHANNELS     Number of channels to use. [default: 20]
+    --n_channels=N_CHANNELS     Number of channels to use. [default: 50]
     --trains_per_worker=TPW     Number of simulations per worker. [default: 1]
     --subfolder=SUBFOLDER       Subfolder to store results in.
     --n_reservoirs=N_RES        Network sizes for variation [default: 10,20,50]
@@ -69,33 +69,10 @@ LIB_SYLL = ('/a/', '/i/', '/u/', '[o]', '[e]', '[E:]', '[2]', '[y]', '[A]',
 ##########################################################
 #
 # Support functions:
-#  - loss_01_time(x, y)
 #  - plot_conf_(conf, outputfile_, N)
 #  - plot_prototypes(flow, N)
 #
-# class FileIterator(indices, n_vow)
-#
 ##########################################################
-
-
-# TODO not used?
-# changed api (x, y) to (x, y, separate)
-#def loss_01_time(x, y, separate=False):
-#     """ function for comparing two trajectories
-#         modify shapes of x and y to use predefined loss_01 function"""
-#     # target signal has different shape in the separate case
-#     if separate:
-#        # call Oger.utils.loss_01, see documentation
-#        return Oger.utils.loss_01(
-#            mdp.numx.atleast_2d(sp.argmax(mdp.numx.mean(x, axis=0))),
-#            mdp.numx.atleast_2d(sp.argmax(y)))
-#     else:
-#        # call Oger.utils.loss_01, see documentation
-#        return Oger.utils.loss_01(
-#            mdp.numx.atleast_2d(sp.argmax(mdp.numx.mean(x, axis=0))),
-#            mdp.numx.atleast_2d(sp.argmax(mdp.numx.mean(y, axis=0))))
-
-
 
 def plot_conf_(conf, outputfile, nn):
     """ function to visualise a balanced confusion matrix
@@ -147,7 +124,6 @@ def plot_prototypes(N, leaky, **kwargs):
         outputfile_plot = outputfile_+'_'+vowels_and_files[i][2]+'_'+str(N)+'.png'
 
         if n_vow > 3:
-#            i_current = (i)*33 + 5
             i_current = (i+1)*33 - 6        # file index of current syllable prototype
             if not uncompressed:
                 inputfile = 'data/'+str(n_vow)+'vow/'+str(n_vow)+'vow_'+str(n_channels)+'chan_'+str(i_current)+'.dat.gz'
@@ -174,7 +150,6 @@ def plot_prototypes(N, leaky, **kwargs):
         inputf.close()                  # close inputfile
 
         xtest = current_data
-#        xtest = np.array(list(current_data[0]))
                                         # read activations from input array
         ytest = flow(xtest)             # get activations of output neurons of trained network
 
@@ -247,8 +222,6 @@ def plot_prototypes(N, leaky, **kwargs):
             pylab.yticks(range(N))
 
         pylab.colorbar(reservoir_activity)
-#        cb.update_bruteforce(reservoir_activity)
-
         pylab.savefig(outputfile_plot)   # save figure
         pylab.close('all')
 
@@ -256,62 +229,6 @@ def plot_prototypes(N, leaky, **kwargs):
     ytest = None
     class_activity = None
     reservoir_activity = None
-
-
-# TODO not used?
-#class File_Iterator:
-#    """ class to iterate input files needed for flow train function
-#        -> not all uncompressed input activations can be loaded at the same time
-#        arguments:
-#            - indices: list of file indices determined randomly
-#            - n_vow: total number of vowels
-#            - separate: use separate infant files?
-#            - compressed: use compressed DRNL output?"""
-#
-#    def __init__(self, indices, n_vow=5, compressed=True, separate=False, verbose=False):
-#                                        # called during File_Iterator object creation
-#        self.indices = indices          # assign file indices list to object
-#        self.n_vow = n_vow              # assign total number of vowels to object
-#        self.i_current = 0              # initiate current item index, this will increment while iterating
-#        self.separate = separate        # determine if infant files are opened separately
-#        self.compressed = compressed    # determine if compressed files are used
-#        self.verbose = verbose
-#
-#    def __iter__(self):                 # standard function for iterator classes
-#        return self
-#
-#    def next(self):                     # called during every iteration
-#        try:                            # while end of indices list not reached
-#            self.current = self.indices[self.i_current]
-#                                        # current is the file index, i.e. the i_current'th integer of indices list
-#            if self.compressed:
-#                pathname = 'data/'+str(self.n_vow)+'vow/'+str(self.n_vow)+'vow_50chan_'+str(self.current)+'.dat.gz'
-#                                        # pathname of current file
-#            if not self.compressed:
-#                pathname = 'data/'+str(self.n_vow)+'vow_50chan/'+str(self.n_vow)+'vow_50chan_'+str(self.current)+'.dat.gz'
-#                                        # pathname of current file
-#            if not os.path.exists(pathname):
-#                                        # stop iteration if file not found
-#                print(pathname+' not found! Stopping iteration.')
-#                raise StopIteration
-#            else:                       # execute if file found
-#                if self.verbose:
-#                    print('opening '+pathname)
-#                inputfile = gzip.open(pathname, 'rb')
-#                                        # open file in gzip read mode
-#                inputarray = np.load(inputfile)
-#                                        # load numpy array from file
-#                inputfile.close()       # close file
-#                inputs = np.array(list(inputarray[0]))
-#                                        # load inputs and outputs as separate numpy arrays
-#                outputs = np.array(list(inputarray[1]))
-#                self.i_current += 1     # increment iteration index
-#                return (inputs, outputs)#inputarray
-#                                        # return inputs, outputs tuple
-#        except IndexError:              # announce end of iteration if end of indices list reached
-#            if self.verbose:
-#                print('End of training set reached. Stopping iteration.')
-#            raise StopIteration
 
 
 
@@ -336,6 +253,7 @@ def save_flow(flow, N, leaky, rank, output_folder):
         filename = output_folder + str(N) + '_leaky' + str(leaky) + '.flow'
         with open(filename, 'wb') as flow_file:
             cPickle.dump(flow, flow_file)
+        os.copy(filename, 'data/current_auditory_system.flow')
 
 
 def get_training_and_test_sets(n_samples, n_training, n_vow):
@@ -343,9 +261,6 @@ def get_training_and_test_sets(n_samples, n_training, n_vow):
     vowels = VOWELS
 
     path = 'data/'
-#    n_samples = 204
-#    n_training = 183
-#    n_test = 21
     n_test = n_samples - n_training
     n_timesteps = 36
     training_set = []
@@ -370,9 +285,13 @@ def get_training_and_test_sets(n_samples, n_training, n_vow):
             test_set.append((current_samples[n_training+j], label.copy()))
 
     label = protolabel.copy()
-    # TODO What does this code do?
-    #for i_time in xrange(n_timesteps):
-    #    label[i_time][3] = 1.
+    # What does this code do?
+    # Answer: This section deals with the null samples.
+    #  The label of the null samples need positive entries in the corresponding line
+    #  -> index of class null is 3
+    for i_time in xrange(n_timesteps):
+        label[i_time][3] = 1.
+
     for i in xrange(n_vow):
         current_path = path+'null_'+vowels[i]
         files = os.listdir(current_path)
@@ -383,9 +302,7 @@ def get_training_and_test_sets(n_samples, n_training, n_vow):
         random.shuffle(current_samples)
 
         for j in xrange(n_test/n_vow):
-#            test_set.append((current_samples[n_training/n_vow+j], label.copy()))
             test_set.append((current_samples[j], label.copy()))
-#        for j in xrange(n_training/n_vow):
         for j in xrange(n_test/n_vow, len(files)/2):
             training_set.append((current_samples[j], label.copy()))
 
@@ -445,11 +362,11 @@ def learn(n_vow, N_reservoir=100, leaky=True, classification=True, **kwargs):
 
     # construct individual nodes
     if leaky:                           # construct leaky reservoir
-#        reservoir = Oger.nodes.LeakyReservoirNode(input_dim=input_dim, output_dim=N_reservoir, input_scaling=.1, leak_rate=.3)
-        reservoir = Oger.nodes.LeakyReservoirNode(input_dim=input_dim, output_dim=N_reservoir, input_scaling=1., spectral_radius=spectral_radius, leak_rate=leak_rate)
-                                        # call LeakyReservoirNode with appropriate number of input units and given number of reservoir units
+        reservoir = Oger.nodes.LeakyReservoirNode(input_dim=input_dim, output_dim=N_reservoir, input_scaling=1.,
+            spectral_radius=spectral_radius, leak_rate=leak_rate)
+                                        # call LeakyReservoirNode with appropriate number of input units and
+                                        #  given number of reservoir units
     else:                               # construct non-leaky reservoir
-#        reservoir = Oger.nodes.ReservoirNode(input_dim=input_dim, output_dim=N_reservoir, input_scaling=.1)
         reservoir = Oger.nodes.ReservoirNode(input_dim=input_dim, output_dim=N_reservoir, input_scaling=1.)
                                         # call ReservoirNode with appropriate number of input units and given number of reservoir units
 
@@ -759,9 +676,6 @@ def main(args):
                                             # make reservoir states inspectable for plotting
     Oger.utils.make_inspectable(Oger.nodes.ReservoirNode)
 
-
-    #lower = 0
-    #upper = 50
     if len(n_reservoirs)==1:
         size = False
     else:

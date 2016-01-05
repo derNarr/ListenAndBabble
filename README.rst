@@ -48,14 +48,7 @@ environment_fun.py :
 
 Example
 -------
-For an example you can run the following in a shell within this folder (it is
-no working yet)::
-
-    source pyenv/bin/activate
-    python generatedata.py a
-    mv data/temp/a data
-    python learndata.py 1
-
+``example.py`` provides a step-by-step tutorial of how to use the code.
 
 
 .. _numpy: http://sourceforge.net/projects/numpy/files/NumPy/
