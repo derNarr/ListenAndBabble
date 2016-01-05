@@ -44,6 +44,7 @@ import os
 import gzip
 from datetime import date
 import cPickle
+import shutil
 
 import numpy as np
 # import Oger  # load after parsing arguments as it needs forever
@@ -253,7 +254,7 @@ def save_flow(flow, N, leaky, rank, output_folder):
         filename = output_folder + str(N) + '_leaky' + str(leaky) + '.flow'
         with open(filename, 'wb') as flow_file:
             cPickle.dump(flow, flow_file)
-        os.copy(filename, 'data/current_auditory_system.flow')
+        shutil.copy(filename, 'data/current_auditory_system.flow')
 
 
 def get_training_and_test_sets(n_samples, n_training, n_vow):
